@@ -29,6 +29,8 @@ resource "google_compute_network" "network" {
   routing_mode            = var.routing_mode
   project                 = var.project_id
   description             = var.description
+  
+  delete_default_routes_on_create = var.delete_default_internet_gateway_routes	
 }
 
 data "google_compute_network" "network" {
@@ -90,23 +92,5 @@ resource "google_compute_route" "route" {
 
   depends_on = [
     google_compute_subnetwork.subnetwork,
-  ]
-}
-
-resource "null_resource" "delete_default_internet_gateway_routes" {
-  count = var.delete_default_internet_gateway_routes ? 1 : 0
-
-  provisioner "local-exec" {
-    command = "${path.module}/scripts/delete-default-gateway-routes.sh ${var.project_id} ${local.network_name}"
-  }
-
-  triggers = {
-    number_of_routes = length(var.routes)
-  }
-
-  depends_on = [
-    google_compute_network.network,
-    google_compute_subnetwork.subnetwork,
-    google_compute_route.route,
   ]
 }
