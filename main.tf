@@ -31,6 +31,8 @@ resource "google_compute_network" "network" {
   description             = var.description
   
   delete_default_routes_on_create = var.delete_default_internet_gateway_routes	
+
+  depends_on = [var.network_dependencies]
 }
 
 data "google_compute_network" "network" {

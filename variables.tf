@@ -23,6 +23,12 @@ variable "create_network" {
   default     = true
   description = "Specify whether to create a new network or just assume it already exists."
 }
+   
+variable "network_dependencies" {
+  type        = any
+  default     = []
+  description = "Dependencies to wait for before creating VPC network components."
+}
 
 variable "network_name" {
   description = "The name of the network being created"
