@@ -18,7 +18,6 @@
 	VPC configuration
  *****************************************/
 resource "google_compute_network" "network" {
-  count                   = var.create_network ? 1 : 0
   name                    = var.network_name
   auto_create_subnetworks = var.auto_create_subnetworks
   routing_mode            = var.routing_mode
@@ -28,12 +27,6 @@ resource "google_compute_network" "network" {
   delete_default_routes_on_create = var.delete_default_internet_gateway_routes	
 
   depends_on = [var.network_dependencies]
-}
-
-data "google_compute_network" "network" {
-  count   = var.create_network ? 0 : 1
-  name    = var.network_name
-  project = var.project_id
 }
 
 /******************************************
@@ -55,7 +48,7 @@ resource "google_compute_subnetwork" "subnetwork" {
   region                   = var.subnets[count.index]["subnet_region"]
   private_ip_google_access = lookup(var.subnets[count.index], "subnet_private_access", "false")
   enable_flow_logs         = lookup(var.subnets[count.index], "subnet_flow_logs", "false")
-  network                  = var.create_network ? google_compute_network.network[0].self_link : data.google_compute_network.network[0].self_link
+  network                  = google_compute_network.network.self_link
   project                  = var.project_id
   secondary_ip_range       = [for i in range(length(contains(keys(var.secondary_ranges), var.subnets[count.index]["subnet_name"]) == true ? var.secondary_ranges[var.subnets[count.index]["subnet_name"]] : [])) : var.secondary_ranges[var.subnets[count.index]["subnet_name"]][i]]
   description              = lookup(var.subnets[count.index], "description", null)
@@ -75,8 +68,8 @@ data "google_compute_subnetwork" "created_subnets" {
 resource "google_compute_route" "route" {
   count                  = length(var.routes)
   project                = var.project_id
-  network                = var.create_network ? google_compute_network.network[0].name : data.google_compute_network.network[0].name
-  name                   = lookup(var.routes[count.index], "name", format("%s-%s-%d", lower(var.create_network ? google_compute_network.network[0].name : data.google_compute_network.network[0].name), "route", count.index))
+  network                = google_compute_network.network.name
+  name                   = lookup(var.routes[count.index], "name", format("%s-%s-%d", lower(google_compute_network.network.name), "route", count.index))
   description            = lookup(var.routes[count.index], "description", "")
   tags                   = compact(split(",", lookup(var.routes[count.index], "tags", "")))
   dest_range             = lookup(var.routes[count.index], "destination_range", "")
